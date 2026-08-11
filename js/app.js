@@ -32,6 +32,8 @@ function pregnancyWeeks(due){
   return {week:Math.max(1,Math.min(40,Math.floor(days/7)+1)),day:Math.max(0,Math.min(6,days%7))}
 }
 function isBabyMode(){return state.pregnancy.status==="baby"||state.baby.arrived}
+function isMum(){ return state?.profile?.role === "mum"; }
+function isPartner(){ return state?.profile?.role === "partner"; }
 function familyConnected(){return Array.isArray(state.family?.memberIds) && state.family.memberIds.length===2;}
 function toast(message){
   const el=document.createElement("div");el.className="toast";el.textContent=message;
