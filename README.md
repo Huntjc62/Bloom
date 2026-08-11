@@ -1,26 +1,38 @@
-# Bloom — Phase 1 MVP
+# Bloom — Phase 1 V2 MVP
 
-A front-end prototype for a shared pregnancy and wellbeing app.
+Bloom is a shared pregnancy and wellbeing companion.
 
-## Included
-- Mum and partner account modes
-- Local demo sign-in/register flow
-- Pregnancy due-date tracking
-- Pregnancy week calculation
-- Daily mood check-in
-- Physical and emotional symptom tracking
-- Partner sharing preferences
-- Shared partner updates
-- In-app notification centre
+Tagline: **For you. For baby. For each other.**
+
+## V2 check-in upgrades
+- Multiple moods can be selected at once.
+- Physical symptoms with Mild / Moderate / Severe intensity.
+- Sleep quality and approximate sleep hours.
+- Energy level.
+- Mental and emotional wellbeing.
+- Baby movement.
+- Appetite.
+- Cravings.
+- "What do you need today?" partner-support options.
+- Optional free-text notes.
+- Share/private control.
+- Check-in preview summary.
+- Expanded structured check-in data ready for future trends and insights.
+
+## Other Phase 1 features
+- Mum/partner roles
+- Pregnancy due-date and week calculation
+- Partner connection
+- Sharing preferences
+- Shared update feed
+- Notification centre
 - Pregnancy timeline
-- Responsive mobile-first UI
+- Responsive mobile UI
 - LocalStorage persistence
 - PWA manifest
 
-## Important
-This is a functional front-end MVP/prototype. It does **not** provide secure production authentication, cloud storage, real push notifications, medical advice, or a production database.
+## Run
+Open `index.html`, or use VS Code Live Server.
 
-## Run locally
-Open `index.html` in a browser, or use VS Code Live Server.
-
-For a real app, the next step would be to replace LocalStorage with a backend such as Supabase/Firebase and add proper authentication, encrypted data handling, consent, privacy controls and production notification services.
+## Production note
+This is still a front-end MVP. For production, use secure authentication, a cloud database, explicit consent, proper health-data privacy controls, encrypted transport/storage, real push notifications, account deletion/export and professional security testing.
