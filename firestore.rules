@@ -3,146 +3,218 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function signedIn() {
-      return request.auth != null;
-    }
-
-    function self(uid) {
-      return signedIn() && request.auth.uid == uid;
-    }
-
-    function profile(uid) {
-      return get(/databases/$(database)/documents/users/$(uid));
-    }
-
-    function myProfile() {
-      return profile(request.auth.uid);
-    }
-
-    function myFamilyId() {
-      return myProfile().data.familyId;
-    }
-
-    function family(fid) {
-      return get(/databases/$(database)/documents/families/$(fid));
-    }
-
+    function signedIn() { return request.auth != null; }
+    function self(uid) { return signedIn() && request.auth.uid == uid; }
+    function profile(uid) { return get(/databases/$(database)/documents/users/$(uid)); }
+    function myProfile() { return profile(request.auth.uid); }
+    function myFamilyId() { return myProfile().data.familyId; }
+    function family(fid) { return get(/databases/$(database)/documents/families/$(fid)); }
     function member(fid) {
       return signedIn()
         && myFamilyId() == fid
         && request.auth.uid in family(fid).data.memberIds;
     }
-
     function owner(fid) {
-      return member(fid)
-        && family(fid).data.ownerUid == request.auth.uid;
+      return member(fid) && family(fid).data.ownerUid == request.auth.uid;
+    }
+    function pendingInviteFor(fid) {
+      return signedIn()
+        && myProfile().data.pendingInviteCode != null
+        && get(/databases/$(database)/documents/partnerInvites/$(myProfile().data.pendingInviteCode)).data.familyId == fid
+        && get(/databases/$(database)/documents/partnerInvites/$(myProfile().data.pendingInviteCode)).data.status == "open";
     }
 
-    // USER PROFILES
     match /users/{uid} {
       allow create: if self(uid)
         && request.resource.data.uid == request.auth.uid
         && request.resource.data.familyId == null
-        && request.resource.data.partnerUid == null;
+        && request.resource.data.partnerUid == null
+        && request.resource.data.pendingInviteCode == null
+        && request.resource.data.role in ["mum", "partner"];
 
-      allow read: if self(uid);
+      // A family member may see the other connected family member's basic
+      // profile so Settings can display who is connected.
+      allow read: if self(uid)
+        || (signedIn()
+          && resource.data.familyId != null
+          && resource.data.familyId == myFamilyId()
+          && request.auth.uid in family(resource.data.familyId).data.memberIds);
 
-      allow update: if self(uid)
+      allow update: if signedIn()
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.email == resource.data.email
         && (
-          // Ordinary profile update; relationship fields do not change.
+          // Normal self update: relationship stays unchanged.
           (
-            request.resource.data.familyId == resource.data.familyId
+            self(uid)
+            && request.resource.data.familyId == resource.data.familyId
             && request.resource.data.partnerUid == resource.data.partnerUid
+            && request.resource.data.pendingInviteCode == resource.data.pendingInviteCode
           )
-          ||
-          // Newly registered Mum attaches to her own newly-created family.
-          (
-            resource.data.familyId == null
+          // Partner records the invitation code before joining.
+          || (
+            self(uid)
+            && resource.data.familyId == null
+            && resource.data.role == "partner"
+            && request.resource.data.familyId == null
+            && request.resource.data.partnerUid == null
+            && request.resource.data.pendingInviteCode != null
+            && get(/databases/$(database)/documents/partnerInvites/$(request.resource.data.pendingInviteCode)).data.status == "open"
+            && get(/databases/$(database)/documents/partnerInvites/$(request.resource.data.pendingInviteCode)).data.targetRole == "partner"
+          )
+          // Mum attaches to her own newly-created one-member family.
+          || (
+            self(uid)
+            && resource.data.familyId == null
+            && resource.data.role == "mum"
             && request.resource.data.familyId != null
             && family(request.resource.data.familyId).data.ownerUid == request.auth.uid
             && family(request.resource.data.familyId).data.memberIds.size() == 1
             && family(request.resource.data.familyId).data.memberIds[0] == request.auth.uid
             && request.resource.data.partnerUid == null
+            && request.resource.data.pendingInviteCode == null
           )
-          ||
-          // Newly registered Partner attaches to a valid two-person family.
-          (
-            resource.data.familyId == null
+          // Partner attaches themselves after an invite has been redeemed.
+          || (
+            self(uid)
+            && resource.data.familyId == null
+            && resource.data.role == "partner"
             && request.resource.data.familyId != null
-            && family(request.resource.data.familyId).data.memberIds.size() == 2
-            && request.auth.uid in family(request.resource.data.familyId).data.memberIds
-            && request.resource.data.partnerUid != null
-            && request.resource.data.partnerUid in family(request.resource.data.familyId).data.memberIds
-            && request.resource.data.partnerUid != request.auth.uid
+            && request.resource.data.partnerUid == family(request.resource.data.familyId).data.ownerUid
+            && request.resource.data.pendingInviteCode == null
+            && getAfter(/databases/$(database)/documents/families/$(request.resource.data.familyId)).data.memberIds.size() == 2
+            && request.auth.uid in getAfter(/databases/$(database)/documents/families/$(request.resource.data.familyId)).data.memberIds
+          )
+          // Mum's partnerUid is linked atomically when the partner joins.
+          || (
+            !self(uid)
+            && resource.data.role == "mum"
+            && resource.data.familyId != null
+            && family(resource.data.familyId).data.ownerUid == uid
+            && request.auth.uid == request.resource.data.partnerUid
+            && profile(request.auth.uid).data.role == "partner"
+            && profile(request.auth.uid).data.pendingInviteCode != null
+            && get(/databases/$(database)/documents/partnerInvites/$(profile(request.auth.uid).data.pendingInviteCode)).data.familyId == resource.data.familyId
+            && getAfter(/databases/$(database)/documents/families/$(resource.data.familyId)).data.memberIds.size() == 2
+            && request.resource.data.familyId == resource.data.familyId
+          )
+          // Mum removes the connected partner.
+          || (
+            !self(uid)
+            && resource.data.role == "partner"
+            && resource.data.familyId != null
+            && family(resource.data.familyId).data.ownerUid == request.auth.uid
+            && request.resource.data.familyId == null
+            && request.resource.data.partnerUid == null
+            && request.resource.data.pendingInviteCode == null
+            && getAfter(/databases/$(database)/documents/families/$(resource.data.familyId)).data.memberIds.size() == 1
+            && getAfter(/databases/$(database)/documents/families/$(resource.data.familyId)).data.memberIds[0] == request.auth.uid
+          )
+          // Mum clears her partner link when the Partner leaves.
+          || (
+            !self(uid)
+            && resource.data.role == "mum"
+            && resource.data.familyId != null
+            && family(resource.data.familyId).data.ownerUid == uid
+            && request.auth.uid != uid
+            && profile(request.auth.uid).data.role == "partner"
+            && request.resource.data.familyId == resource.data.familyId
+            && request.resource.data.partnerUid == null
+            && getAfter(/databases/$(database)/documents/families/$(resource.data.familyId)).data.memberIds.size() == 1
+            && getAfter(/databases/$(database)/documents/families/$(resource.data.familyId)).data.memberIds[0] == uid
+          )
+          // Partner leaves the family themselves.
+          || (
+            self(uid)
+            && resource.data.role == "partner"
+            && resource.data.familyId != null
+            && request.resource.data.familyId == null
+            && request.resource.data.partnerUid == null
+            && request.resource.data.pendingInviteCode == null
+            && getAfter(/databases/$(database)/documents/families/$(resource.data.familyId)).data.memberIds.size() == 1
+            && getAfter(/databases/$(database)/documents/families/$(resource.data.familyId)).data.memberIds[0] == family(resource.data.familyId).data.ownerUid
           )
         );
 
       allow delete: if self(uid);
     }
 
-    // FAMILIES
     match /families/{fid} {
       allow create: if signedIn()
         && request.resource.data.ownerUid == request.auth.uid
+        && profile(request.auth.uid).data.role == "mum"
         && request.resource.data.memberIds.size() == 1
         && request.resource.data.memberIds[0] == request.auth.uid
         && request.resource.data.memberCount == 1;
 
-      allow read: if member(fid);
+      // Members can read their family; a partner who has supplied a valid
+      // invitation can read the target family only while the invite is open.
+      allow read: if member(fid) || pendingInviteFor(fid);
 
-      allow update: if member(fid)
+      allow update: if (
+        // Normal family setting update with membership unchanged.
+        member(fid)
         && request.resource.data.ownerUid == resource.data.ownerUid
-        && (
-          // Normal family settings update; membership unchanged.
-          (
-            request.resource.data.memberIds == resource.data.memberIds
-            && request.resource.data.memberCount == resource.data.memberCount
-          )
-          ||
-          // Partner joins: one existing member + the authenticated caller.
-          (
-            resource.data.memberIds.size() == 1
-            && resource.data.memberCount == 1
-            && request.resource.data.memberIds.size() == 2
-            && request.resource.data.memberCount == 2
-            && request.resource.data.memberIds[0] == resource.data.memberIds[0]
-            && request.resource.data.memberIds[1] == request.auth.uid
-            && request.auth.uid != resource.data.memberIds[0]
-          )
-        );
+        && request.resource.data.memberIds == resource.data.memberIds
+        && request.resource.data.memberCount == resource.data.memberCount
+      ) || (
+        // Partner joins: exactly one Mum becomes Mum + Partner.
+        pendingInviteFor(fid)
+        && resource.data.ownerUid == resource.data.memberIds[0]
+        && profile(resource.data.ownerUid).data.role == "mum"
+        && resource.data.memberIds.size() == 1
+        && resource.data.memberCount == 1
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.memberIds.size() == 2
+        && request.resource.data.memberCount == 2
+        && request.resource.data.memberIds[0] == resource.data.memberIds[0]
+        && request.resource.data.memberIds[1] == request.auth.uid
+        && profile(request.auth.uid).data.role == "partner"
+      ) || (
+        // Mum removes the partner: exactly two members becomes Mum only.
+        owner(fid)
+        && resource.data.memberIds.size() == 2
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.memberIds.size() == 1
+        && request.resource.data.memberIds[0] == request.auth.uid
+        && request.resource.data.memberCount == 1
+      ) || (
+        // Partner leaves: exactly two members becomes Mum only.
+        member(fid)
+        && profile(request.auth.uid).data.role == "partner"
+        && resource.data.memberIds.size() == 2
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.memberIds.size() == 1
+        && request.resource.data.memberIds[0] == resource.data.ownerUid
+        && request.resource.data.memberCount == 1
+      );
 
-      allow delete: if owner(fid);
+      allow delete: if owner(fid) && resource.data.memberIds.size() == 1;
 
       match /checkins/{id} {
         allow read: if member(fid);
-        allow create: if member(fid)
-          && request.resource.data.createdByUid == request.auth.uid;
-        allow update, delete: if member(fid)
-          && resource.data.createdByUid == request.auth.uid;
+        allow create: if member(fid) && request.resource.data.createdByUid == request.auth.uid;
+        allow update, delete: if member(fid) && resource.data.createdByUid == request.auth.uid;
       }
-
       match /babyActivity/{id} {
         allow read: if member(fid);
-        allow create: if member(fid)
-          && request.resource.data.createdByUid == request.auth.uid;
-        allow update, delete: if member(fid)
-          && resource.data.createdByUid == request.auth.uid;
+        allow create: if member(fid) && request.resource.data.createdByUid == request.auth.uid;
+        allow update, delete: if member(fid) && resource.data.createdByUid == request.auth.uid;
       }
-
       match /notifications/{id} {
         allow read, create, update, delete: if member(fid);
       }
     }
 
-    // PARTNER INVITES
     match /partnerInvites/{code} {
       allow create: if signedIn()
         && request.resource.data.createdByUid == request.auth.uid
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.targetRole == "partner"
         && request.resource.data.status == "open"
         && request.resource.data.familyId == myFamilyId()
         && owner(request.resource.data.familyId)
+        && profile(request.auth.uid).data.role == "mum"
         && family(request.resource.data.familyId).data.memberIds.size() == 1;
 
       allow read: if signedIn();
@@ -150,15 +222,12 @@ service cloud.firestore {
       allow update: if signedIn()
         && resource.data.status == "open"
         && request.resource.data.status == "used"
-        && request.resource.data.usedByUid == request.auth.uid;
+        && request.resource.data.usedByUid == request.auth.uid
+        && resource.data.targetRole == "partner";
 
-      allow delete: if signedIn()
-        && resource.data.createdByUid == request.auth.uid;
+      allow delete: if signedIn() && resource.data.createdByUid == request.auth.uid;
     }
 
-    // Default deny.
-    match /{document=**} {
-      allow read, write: if false;
-    }
+    match /{document=**} { allow read, write: if false; }
   }
 }

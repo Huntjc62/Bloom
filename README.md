@@ -1,25 +1,40 @@
-# Bloom — Firebase GitHub Pages — Permissions Fixed
+# Bloom — Firebase + GitHub Pages Updated Package
 
-This package fixes the `Missing or insufficient permissions` error that could
-appear after a successful Firebase account creation or login.
+This is the updated Bloom Firebase package for the GitHub Pages setup.
 
-### Fixed
+## Included
 
-- Mum account can attach to its new one-member family.
-- Partner can join an existing one-member family.
-- Family can only grow to two members.
-- Partner browser no longer attempts to update the Mum's user document.
-- Bloom determines whether a partner is connected from `family.memberIds`.
-- Check-ins and baby activity remain restricted to family members.
-- Demo mode remains removed.
-- Firebase Web SDK remains 12.17.1.
-- Your supplied Firebase project configuration remains in the package.
+- Real Firebase account registration
+- Real Firebase login
+- No demo/guest mode
+- Mum / Partner accounts
+- Two-person Bloom family model
+- Partner invitation
+- Firestore user profiles
+- Firestore family data
+- Pregnancy check-ins
+- Baby tracker
+- Baby timeline
+- Updated Firestore security rules
+- Firebase Web SDK 12.17.1
+- Exact Firebase config supplied for `bloom-bc6d9`
 
-### Required Firebase step
+## Hosting
 
-After uploading the package to GitHub, **publish the included `firestore.rules`**
-in Firebase Console:
+Designed for GitHub Pages.
 
-Firestore Database → Rules → replace → Publish.
+No Firebase Hosting, npm or Firebase CLI is required for the browser front end.
 
-Then test with a fresh Mum account.
+## Firebase console
+
+Before testing:
+1. Enable Authentication → Email/Password.
+2. Create Firestore.
+3. Publish `firestore.rules`.
+4. Add the GitHub Pages domain under Authentication → Settings → Authorised domains.
+
+## Note about the API key error
+
+The package uses the exact configuration supplied by the Firebase Web App.
+
+If the browser still reports `auth/api-key-not-valid`, that is an Authentication/API-key issue rather than a Firestore-rules issue. The Firestore rules are still included and should be published for the next stage.
