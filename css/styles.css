@@ -160,3 +160,23 @@ input:focus,select:focus{border-color:var(--primary);box-shadow:0 0 0 3px #eeeaf
   .brand-logo{width:116px !important;height:46px !important}
   .login-logo{width:min(270px,82%) !important;max-height:160px !important}
 }
+
+/* Bloom mobile navigation — keep all primary destinations accessible */
+@media (max-width: 700px){
+  .mobile-nav{
+    display:grid !important;
+    grid-template-columns:repeat(5, minmax(0,1fr));
+    gap:2px;
+  }
+  .mobile-nav button{
+    min-width:0;
+    padding:8px 2px !important;
+    font-size:11px !important;
+    line-height:1.15;
+    white-space:nowrap;
+  }
+  .mobile-nav button span{
+    display:block;
+    margin-bottom:2px;
+  }
+}

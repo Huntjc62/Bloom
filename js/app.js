@@ -145,7 +145,6 @@ function partnerDashboard(){
   <section class="card hero"><div class="hero-inner"><div><div class="eyebrow">Mum's latest check-in</div>${latest?`<div class="big-week">${(latest.moods||[]).map(moodEmoji).join(" ")||"🙂"}</div><p class="subtitle">${esc((latest.moods||[]).join(" · ")||"No mood selected")} · ${fmt(new Date(latest.date||Date.now()))}</p>`:`<div class="big-week">💗</div><p class="subtitle">Mum hasn't shared a check-in yet.</p>`}</div><div style="font-size:80px">❤️</div></div></section>
   <div style="height:18px"></div><div class="grid grid-2"><section class="card"><h2>Latest wellbeing</h2>${latest?checkinSummary(latest):`<div class="empty">No shared check-in yet.</div>`}</section><section class="card"><h2>Shared updates</h2>${recentUpdates(true)}</section></div>
   ${isBabyMode()?`<div style="height:18px"></div><section class="card"><h2>👶 Recent baby activity</h2>${babyRecent()}</section>`:""}
-  <div class="action-row" style="margin-top:18px"><button class="btn btn-primary" data-page="baby">👶 Open Baby Tracker</button><button class="btn btn-secondary" data-page="updates">View Mum's Updates</button></div>
   <div class="action-row" style="margin-top:18px">
     <button class="btn btn-primary" data-page="baby">👶 Open Baby Tracker</button>
     <button class="btn btn-secondary" data-page="updates">View Mum's Updates</button>
