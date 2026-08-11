@@ -1,0 +1,111 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function self(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    function profile(uid) {
+      return get(/databases/$(database)/documents/users/$(uid));
+    }
+
+    function myFamilyId() {
+      return profile(request.auth.uid).data.familyId;
+    }
+
+    function member(fid) {
+      return signedIn()
+        && myFamilyId() == fid
+        && request.auth.uid in get(/databases/$(database)/documents/families/$(fid)).data.memberIds;
+    }
+
+    function owner(fid) {
+      return member(fid)
+        && get(/databases/$(database)/documents/families/$(fid)).data.ownerUid == request.auth.uid;
+    }
+
+    match /users/{uid} {
+      allow create: if self(uid)
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.familyId == null;
+
+      allow read: if self(uid);
+
+      // A client may update their own profile but cannot change the identity
+      // or family relationship fields directly.
+      allow update: if self(uid)
+        && request.resource.data.uid == resource.data.uid
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.familyId == resource.data.familyId
+        && request.resource.data.partnerUid == resource.data.partnerUid;
+
+      allow delete: if self(uid);
+    }
+
+    match /families/{fid} {
+      allow create: if signedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.memberIds.size() == 1
+        && request.resource.data.memberIds[0] == request.auth.uid
+        && request.resource.data.memberCount == 1;
+
+      allow read: if member(fid);
+
+      // Client can update family settings, but not manufacture/remove members.
+      allow update: if member(fid)
+        && request.resource.data.ownerUid == resource.data.ownerUid
+        && request.resource.data.memberIds == resource.data.memberIds
+        && request.resource.data.memberCount == resource.data.memberCount;
+
+      allow delete: if owner(fid);
+
+      match /checkins/{id} {
+        allow read: if member(fid);
+        allow create: if member(fid)
+          && request.resource.data.createdByUid == request.auth.uid;
+        allow update, delete: if member(fid)
+          && resource.data.createdByUid == request.auth.uid;
+      }
+
+      match /babyActivity/{id} {
+        allow read: if member(fid);
+        allow create: if member(fid)
+          && request.resource.data.createdByUid == request.auth.uid;
+        allow update, delete: if member(fid)
+          && resource.data.createdByUid == request.auth.uid;
+      }
+
+      match /notifications/{id} {
+        allow read, create, update, delete: if member(fid);
+      }
+    }
+
+    match /partnerInvites/{code} {
+      allow create: if signedIn()
+        && request.resource.data.createdByUid == request.auth.uid
+        && owner(request.resource.data.familyId)
+        && get(/databases/$(database)/documents/families/$(request.resource.data.familyId)).data.memberIds.size() == 1
+        && request.resource.data.status == "open";
+
+      allow read: if signedIn();
+
+      allow update: if signedIn()
+        && resource.data.status == "open"
+        && request.resource.data.status == "used"
+        && request.resource.data.usedByUid == request.auth.uid;
+
+      allow delete: if signedIn()
+        && resource.data.createdByUid == request.auth.uid;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
