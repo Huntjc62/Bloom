@@ -38,15 +38,7 @@ service cloud.firestore {
         && family(fid).data.ownerUid == request.auth.uid;
     }
 
-    /*
-     * USER PROFILES
-     *
-     * Users can create their own account profile.
-     * Users can read only their own profile.
-     *
-     * A client cannot directly change familyId or partnerUid once the
-     * relationship exists. Partner pairing is handled by the invite flow.
-     */
+    // USER PROFILES
     match /users/{uid} {
       allow create: if self(uid)
         && request.resource.data.uid == request.auth.uid
@@ -58,21 +50,39 @@ service cloud.firestore {
       allow update: if self(uid)
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.email == resource.data.email
-        && request.resource.data.familyId == resource.data.familyId
-        && request.resource.data.partnerUid == resource.data.partnerUid;
+        && (
+          // Ordinary profile update; relationship fields do not change.
+          (
+            request.resource.data.familyId == resource.data.familyId
+            && request.resource.data.partnerUid == resource.data.partnerUid
+          )
+          ||
+          // Newly registered Mum attaches to her own newly-created family.
+          (
+            resource.data.familyId == null
+            && request.resource.data.familyId != null
+            && family(request.resource.data.familyId).data.ownerUid == request.auth.uid
+            && family(request.resource.data.familyId).data.memberIds.size() == 1
+            && family(request.resource.data.familyId).data.memberIds[0] == request.auth.uid
+            && request.resource.data.partnerUid == null
+          )
+          ||
+          // Newly registered Partner attaches to a valid two-person family.
+          (
+            resource.data.familyId == null
+            && request.resource.data.familyId != null
+            && family(request.resource.data.familyId).data.memberIds.size() == 2
+            && request.auth.uid in family(request.resource.data.familyId).data.memberIds
+            && request.resource.data.partnerUid != null
+            && request.resource.data.partnerUid in family(request.resource.data.familyId).data.memberIds
+            && request.resource.data.partnerUid != request.auth.uid
+          )
+        );
 
       allow delete: if self(uid);
     }
 
-    /*
-     * FAMILIES
-     *
-     * A family starts with exactly one member.
-     * A family can never contain more than two members.
-     *
-     * The owner can update family settings, but normal client writes cannot
-     * manufacture or remove members.
-     */
+    // FAMILIES
     match /families/{fid} {
       allow create: if signedIn()
         && request.resource.data.ownerUid == request.auth.uid
@@ -84,27 +94,39 @@ service cloud.firestore {
 
       allow update: if member(fid)
         && request.resource.data.ownerUid == resource.data.ownerUid
-        && request.resource.data.memberIds == resource.data.memberIds
-        && request.resource.data.memberCount == resource.data.memberCount;
+        && (
+          // Normal family settings update; membership unchanged.
+          (
+            request.resource.data.memberIds == resource.data.memberIds
+            && request.resource.data.memberCount == resource.data.memberCount
+          )
+          ||
+          // Partner joins: one existing member + the authenticated caller.
+          (
+            resource.data.memberIds.size() == 1
+            && resource.data.memberCount == 1
+            && request.resource.data.memberIds.size() == 2
+            && request.resource.data.memberCount == 2
+            && request.resource.data.memberIds[0] == resource.data.memberIds[0]
+            && request.resource.data.memberIds[1] == request.auth.uid
+            && request.auth.uid != resource.data.memberIds[0]
+          )
+        );
 
       allow delete: if owner(fid);
 
       match /checkins/{id} {
         allow read: if member(fid);
-
         allow create: if member(fid)
           && request.resource.data.createdByUid == request.auth.uid;
-
         allow update, delete: if member(fid)
           && resource.data.createdByUid == request.auth.uid;
       }
 
       match /babyActivity/{id} {
         allow read: if member(fid);
-
         allow create: if member(fid)
           && request.resource.data.createdByUid == request.auth.uid;
-
         allow update, delete: if member(fid)
           && resource.data.createdByUid == request.auth.uid;
       }
@@ -114,14 +136,7 @@ service cloud.firestore {
       }
     }
 
-    /*
-     * PARTNER INVITES
-     *
-     * Anyone authenticated may read a specific invitation code so that a
-     * partner can redeem a code they have received.
-     *
-     * Only a one-member family owner can create an open invite.
-     */
+    // PARTNER INVITES
     match /partnerInvites/{code} {
       allow create: if signedIn()
         && request.resource.data.createdByUid == request.auth.uid
@@ -141,9 +156,7 @@ service cloud.firestore {
         && resource.data.createdByUid == request.auth.uid;
     }
 
-    /*
-     * DENY EVERYTHING ELSE
-     */
+    // Default deny.
     match /{document=**} {
       allow read, write: if false;
     }

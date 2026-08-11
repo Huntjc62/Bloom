@@ -146,9 +146,8 @@ export async function joinFamilyWithInvite(uid,code) {
       partnerUid:family.ownerUid
     });
 
-    tx.update(doc(db,"users",family.ownerUid),{
-      partnerUid:uid
-    });
+    // Do not edit the owner's user document from the partner's browser.
+    // The family memberIds are the source of truth for the connection.
 
     tx.update(inviteRef,{
       status:"used",

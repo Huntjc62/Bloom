@@ -32,6 +32,9 @@ function pregnancyWeeks(due){
   return {week:Math.max(1,Math.min(40,Math.floor(days/7)+1)),day:Math.max(0,Math.min(6,days%7))}
 }
 function isBabyMode(){return state.pregnancy.status==="baby"||state.baby.arrived}
+function familyConnected(){
+  return Array.isArray(state.family?.memberIds) && state.family.memberIds.length === 2;
+}
 function toast(message){
   const el=document.createElement("div");el.className="toast";el.textContent=message;
   document.body.appendChild(el);setTimeout(()=>el.remove(),2800)
@@ -128,10 +131,10 @@ function dashboard(){
 }
 function pregnancyDashboard(){
   const p=pregnancyWeeks(state.pregnancy.dueDate),pct=Math.round(p.week/40*100),last=state.checkIns[0];
-  return `<div class="page-title"><div><h1>Good morning, ${esc(state.profile.name)} 👋</h1><p class="subtitle">${fmt(now())} · ${state.profile.partnerUid?"Partner connected":"No partner connected yet"}</p></div></div>
+  return `<div class="page-title"><div><h1>Good morning, ${esc(state.profile.name)} 👋</h1><p class="subtitle">${fmt(now())} · ${familyConnected()?"Partner connected":"No partner connected yet"}</p></div></div>
   <section class="card hero"><div class="hero-inner"><div><div class="eyebrow">Pregnancy</div><div class="big-week">${p.week}<span style="font-size:20px"> weeks</span></div><p class="subtitle">${p.day} days · ${daysUntil(state.pregnancy.dueDate)} days until due date</p><div class="progress"><span style="width:${pct}%"></span></div><span class="mini">${pct}% of the way there · Due ${fmt(new Date(state.pregnancy.dueDate+"T12:00:00"))}</span></div><div style="font-size:80px">🤰</div></div></section>
   <div style="height:18px"></div><div class="grid grid-2"><section class="card"><h2>How are you feeling?</h2><p class="subtitle">Choose multiple moods in your check-in.</p><div class="mood-grid" style="margin:15px 0">${moodButtons()}</div><button class="btn btn-primary" id="openCheckin">Complete check-in</button></section>
-  <section class="card"><h2>Partner connection</h2>${state.profile.partnerUid?`<div class="notice success">❤️ Your partner is connected to this Bloom family.</div>`:`<div class="notice warn">Your family has one member. Add your partner from Settings.</div>`}<button class="btn btn-secondary" id="goSettings" style="margin-top:12px">Manage family</button></section></div>
+  <section class="card"><h2>Partner connection</h2>${familyConnected()?`<div class="notice success">❤️ Your partner is connected to this Bloom family.</div>`:`<div class="notice warn">Your family has one member. Add your partner from Settings.</div>`}<button class="btn btn-secondary" id="goSettings" style="margin-top:12px">Manage family</button></section></div>
   <div style="height:18px"></div><div class="grid grid-2"><section class="card"><h2>Latest check-in</h2>${last?checkinSummary(last):`<div class="empty">No check-in yet.</div>`}</section><section class="card"><h2>Shared activity</h2>${recentUpdates()}</section></div>`
 }
 function babyDashboard(){
@@ -195,7 +198,7 @@ function settings(){
   const owner=state.family?.ownerUid===auth.currentUser?.uid;
   return `<div class="page-title"><div><h1>Settings</h1><p class="subtitle">Account, family and app settings.</p></div></div>
   <div class="grid grid-2"><section class="card"><h2>Account</h2><div class="notice success">✓ Signed in as ${esc(state.profile.email)}</div><p class="mini" style="margin-top:10px">${state.profile.role==="partner"?"Partner account":"Mum account"}</p></section>
-  <section class="card"><h2>Family</h2>${state.profile.partnerUid?`<div class="notice success">❤️ Two-person Bloom family connected.</div>`:`<div class="notice warn">Your family currently has one member.</div>`}${owner&&!state.profile.partnerUid?`<button class="btn btn-primary" id="createInvite" style="margin-top:12px">Create partner invite</button><div id="inviteResult"></div>`:""}${state.profile.role==="partner"&&!state.profile.familyId?`<div class="form-group" style="margin-top:12px"><label>Partner invitation code</label><input id="inviteCode" placeholder="e.g. AB12CD34"></div><button class="btn btn-primary" id="joinInvite">Join Bloom family</button>`:""}</section></div>
+  <section class="card"><h2>Family</h2>${familyConnected()?`<div class="notice success">❤️ Two-person Bloom family connected.</div>`:`<div class="notice warn">Your family currently has one member.</div>`}${owner&&!familyConnected()?`<button class="btn btn-primary" id="createInvite" style="margin-top:12px">Create partner invite</button><div id="inviteResult"></div>`:""}${state.profile.role==="partner"&&!state.profile.familyId?`<div class="form-group" style="margin-top:12px"><label>Partner invitation code</label><input id="inviteCode" placeholder="e.g. AB12CD34"></div><button class="btn btn-primary" id="joinInvite">Join Bloom family</button>`:""}</section></div>
   <div style="height:18px"></div><section class="card"><h2>App stage</h2><div class="notice ${isBabyMode()?"success":"warn"}">${isBabyMode()?"👶 Mum & Baby mode is active.":"🤰 Pregnancy mode is active."}</div><div class="action-row" style="margin-top:14px"><button class="btn ${!isBabyMode()?"btn-primary":"btn-secondary"}" id="pregnancyMode">🤰 Pregnancy mode</button><button class="btn ${isBabyMode()?"btn-primary":"btn-secondary"}" id="babyMode">👶 Baby mode</button></div></section>
   ${isBabyMode()?`<div style="height:18px"></div><section class="card"><h2>Baby profile</h2><div class="grid grid-2"><div class="form-group"><label>Baby name</label><input id="babyName" value="${esc(state.baby.name)}"></div><div class="form-group"><label>Birth date</label><input id="birthDate" type="date" value="${esc(state.baby.birthDate)}"></div><div class="form-group"><label>Birth weight</label><input id="birthWeight" value="${esc(state.baby.birthWeight)}"></div></div><button class="btn btn-primary" id="saveBabyProfile">Save baby profile</button></section>`:""}
   <div style="height:18px"></div><section class="card"><h2>Sharing</h2>${setting("mood","Mood updates","Share selected moods with your partner.")}${setting("symptoms","Symptom updates","Share selected symptoms.")}${setting("sleep","Sleep updates","Share sleep information.")}${setting("babyActivity","Baby activity","Share baby activity with your partner.")}</section>
