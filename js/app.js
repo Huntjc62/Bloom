@@ -4,7 +4,7 @@ import {
   addCheckin,addBabyActivity,loadCheckins,loadBabyActivity
 } from "./firebase.js";
 
-const KEY="bloom_ui_state_v3";
+const KEY="bloom_ui_preferences_v1";
 let state=JSON.parse(localStorage.getItem(KEY)||"null")||{
   user:null,profile:null,family:null,page:"dashboard",
   pregnancy:{dueDate:"2026-11-28",status:"pregnancy"},
@@ -13,6 +13,14 @@ let state=JSON.parse(localStorage.getItem(KEY)||"null")||{
   checkIns:[],babyLogs:[],notifications:[]
 };
 let firebaseReady=false;
+
+// Bloom no longer has a demo/guest account. Any old local demo session is ignored.
+try {
+  localStorage.removeItem("bloom_ui_state_v3");
+  localStorage.removeItem("bloom_demo_user");
+  localStorage.removeItem("bloom_demo_mode");
+  localStorage.removeItem("bloom_logged_in");
+} catch (_) {}
 
 function saveUI(){localStorage.setItem(KEY,JSON.stringify(state))}
 function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
@@ -50,13 +58,25 @@ function loginScreen(mode="login"){
       <div class="role-picker"><button class="role selected" data-role="mum">🤰 Mum</button><button class="role" data-role="partner">❤️ Partner</button></div>`:""}
     <div class="form-group"><label>Email address</label><input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></div>
     <div class="form-group"><label>Password</label><input id="authPassword" type="password" autocomplete="${mode==="register"?"new-password":"current-password"}" placeholder="At least 6 characters"></div>
-    <button id="authSubmit" class="btn btn-primary" style="width:100%">${mode==="register"?"Create account":"Sign in"}</button>
+    <button id="authSubmit" class="btn btn-primary" style="width:100%">${mode==="register"?"Create my Bloom account":"Log in to Bloom"}</button>
     <div id="authError" class="notice warn" style="display:none;margin-top:12px"></div>
-    <button id="switchAuth" class="btn btn-ghost" style="width:100%;margin-top:10px">${mode==="register"?"Already have an account? Sign in":"New to Bloom? Create an account"}</button>
+    <button id="switchAuth" class="btn btn-ghost" style="width:100%;margin-top:10px">${mode==="register"?"Already have an account? Log in":"New to Bloom? Create an account"}</button>
     <p class="mini" style="margin-top:14px">Your Bloom account is private. Shared information is limited to your connected family.</p>
   </section></main>`;
 }
-function render(){document.getElementById("app").innerHTML=state.user?shell():loginScreen(window.authMode||"login"); if(state.user) bindApp(); else bindAuth()}
+function render(){
+  // Firebase Auth is the source of truth. LocalStorage can only hold UI preferences.
+  const firebaseUser = auth.currentUser;
+  if (!firebaseUser) {
+    state.user=null;
+    state.profile=null;
+    document.getElementById("app").innerHTML=loginScreen(window.authMode||"login");
+    bindAuth();
+    return;
+  }
+  document.getElementById("app").innerHTML=state.user?shell():loginScreen(window.authMode||"login");
+  if(state.user) bindApp(); else bindAuth();
+}
 
 function bindAuth(){
   let role="mum";
@@ -70,7 +90,7 @@ function bindAuth(){
       if(window.authMode==="register"){
         const name=document.getElementById("authName").value.trim()||"Bloom User";
         await registerUser({name,email,password,role});
-        toast("Account created. Check your email to verify Bloom.");
+        toast("Account created successfully. You can now use Bloom.");
       }else{
         await loginUser(email,password);
       }
@@ -258,7 +278,21 @@ async function bootUser(user){
 
 onAuthStateChanged(auth,async user=>{
   if(user){
-    try{await bootUser(user);render()}catch(e){console.error(e);toast(friendlyError(e))}
-  }else{state.user=null;state.profile=null;state.family=null;render()}
+    try{
+      await bootUser(user);
+      render();
+    }catch(e){
+      console.error(e);
+      state.user=null;
+      state.profile=null;
+      state.family=null;
+      render();
+      toast(friendlyError(e));
+    }
+  }else{
+    state.user=null;
+    state.profile=null;
+    state.family=null;
+    render();
+  }
 });
-render();

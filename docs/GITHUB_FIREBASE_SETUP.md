@@ -1,80 +1,50 @@
-# Bloom — GitHub Pages + Firebase exact setup
+# Bloom — GitHub Pages + Firebase — No Demo Mode
 
-## You do NOT need
+## Demo mode has been removed
 
-- VS Code
-- Firebase Hosting
-- Firebase CLI
-- npm
-- a Node server
+Bloom no longer uses a fake/demo account.
 
-The Bloom front end can remain on GitHub Pages.
+Authentication is handled by Firebase Authentication.
 
-## You DO need
+### First screen
+- Log in to Bloom
+- Create your Bloom account
 
-- GitHub repository
-- Firebase project
-- Firebase Authentication
-- Cloud Firestore
+### Registration
+- Name
+- Mum or Partner
+- Email
+- Password
 
-## Firebase Authentication
+### Firebase creates
+- Authentication user UID
+- Firestore user profile
 
-Firebase Console:
-Build → Authentication → Sign-in method → Email/Password → Enable.
+### Family
+A Mum account creates a one-member family automatically.
 
-## Firestore
+The Mum can create a one-use partner invite.
 
-Firebase Console:
-Build → Firestore Database → Create database → Production mode.
+The Partner creates their own Firebase account and enters the invite.
 
-## Firestore rules
+A family can contain a maximum of two members.
 
-Open Firestore → Rules.
+## If old demo mode appears
 
-Replace the rules with the `firestore.rules` file from this package and click Publish.
+1. Confirm the new files have been committed to GitHub.
+2. Confirm GitHub Pages has deployed the latest commit.
+3. Hard refresh the browser.
+4. Try an incognito/private window.
+5. If necessary, clear the site's LocalStorage.
 
-## Authentication authorised domains
+The new code also removes known legacy Bloom demo keys automatically.
 
-Firebase Console:
-Authentication → Settings → Authorised domains.
+## Firebase settings
 
-Add the domain where your GitHub Pages Bloom app is hosted.
+Authentication → Sign-in method → Email/Password → Enable.
 
-## GitHub
+Authentication → Settings → Authorised domains → add the GitHub Pages domain.
 
-Replace the files in your existing Bloom repository with this package.
+Firestore → Database → create the database.
 
-Commit and push.
-
-Wait for GitHub Pages to rebuild.
-
-Then test:
-
-### Test 1 — Mum
-- Register Sarah
-- Select Mum
-- Confirm user appears in Authentication
-- Confirm `users/{Sarah UID}` appears in Firestore
-- Confirm a family is created
-
-### Test 2 — Partner
-- Register a second account
-- Select Partner
-- Enter Sarah's invitation code
-- Confirm the family now contains exactly two UIDs
-
-### Test 3 — Third user
-- Register a third account
-- Try Sarah's invitation code
-- It must be rejected
-
-### Test 4 — isolation
-A third account must not be able to read:
-- Sarah's profile
-- Sarah's family
-- Sarah's check-ins
-- Sarah's baby activity
-
-## Browser note
-
-The Firebase web config is designed to be present in the client. It is not an Admin SDK credential. Never put a Firebase service-account private key in GitHub Pages.
+Firestore → Rules → publish `firestore.rules`.

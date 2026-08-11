@@ -1,88 +1,70 @@
-# Bloom — Firebase + GitHub Pages MVP
+# Bloom — Firebase GitHub Pages — No Demo Mode
 
-**Bloom — For you. For baby. For each other.**
+This version removes the demo/guest mode completely.
 
-This version is designed specifically for a Bloom site hosted on **GitHub Pages**. You do not need Firebase Hosting or the Firebase CLI to run the front end.
+## The app now starts with
 
-## What is connected
+- Log in to Bloom
+- Create your Bloom account
 
-- Firebase Authentication
-- Email/password registration
-- Login/logout
-- User profiles
-- Mum / Partner roles
-- Private two-person family
-- One-use partner invite codes
-- Firestore family data
-- Shared pregnancy check-ins
-- Shared baby activity
-- Pregnancy / Baby mode
-- Firestore security rules
+There is no demo account, fake user, guest account or local authentication.
 
-## Firebase setup
+Firebase Authentication is the only source of truth for whether someone is signed in.
+
+## If you already used an older Bloom version
+
+The app clears the old Bloom demo/local-login keys from the browser on load. Firebase accounts are unaffected.
+
+## Firebase requirements
 
 In Firebase Console:
 
-1. Authentication → Sign-in method → enable Email/Password.
-2. Firestore Database → Create database → use Production mode.
-3. Firebase Project settings → Your apps → Web app → confirm the config matches `js/firebase-config.js`.
-4. Firebase Console → Firestore → Rules → paste `firestore.rules` and publish.
+1. Authentication → Sign-in method → Email/Password → Enabled.
+2. Firestore Database → Create database.
+3. Firestore Rules → publish the included `firestore.rules`.
+4. Authentication → Settings → Authorised domains → add your GitHub Pages domain.
 
 ## GitHub Pages
 
-Push this entire package's contents into your GitHub repository, preserving:
+Replace the files in your existing repository with this package and push the changes.
+
+Because Firebase is loaded as browser ES modules from the official Firebase CDN, you do not need npm, VS Code or Firebase Hosting for this setup.
+
+## Expected first screen
 
 ```text
-index.html
-manifest.json
-css/
-  styles.css
-js/
-  app.js
-  firebase.js
-  firebase-config.js
-firestore.rules
-firebase.json
+Bloom
+
+For you. For baby. For each other.
+
+Welcome back to Bloom
+
+Email address
+[                         ]
+
+Password
+[                         ]
+
+[ Log in to Bloom ]
+
+[ New to Bloom? Create an account ]
 ```
 
-GitHub Pages serves the ES module JavaScript directly; no npm install is required for this browser version.
+Clicking "Create an account" gives:
 
-## Important Firebase Console setting for GitHub Pages
+```text
+Your name
+I'm joining Bloom as...
+[ Mum ] [ Partner ]
 
-Authentication → Settings → Authorised domains
+Email address
+Password
 
-Make sure your GitHub Pages domain is listed, for example:
+[ Create my Bloom account ]
+```
 
-`YOUR-USERNAME.github.io`
-
-If using a project site, also make sure the domain hosting the Bloom app is authorised.
-
-## User/family model
-
-Every person has their own Firebase Authentication UID.
-
-A Bloom family starts with one member.
-
-The owner creates a one-use invitation code.
-
-The partner creates their own account and enters the invitation code.
-
-The family then has exactly two member UIDs.
-
-Shared data is stored under that family ID.
-
-A third user cannot access the family through Firestore rules.
+A successful registration creates a real Firebase Authentication user and a Firestore `users/{uid}` record.
 
 ## Important
 
-This is a backend-connected MVP, not a final production health-data system. Before public launch, add:
-- email verification UI
-- password reset
-- invite expiry
-- server-side partner pairing with a Cloud Function
-- Firebase App Check
-- rate limiting / abuse controls
-- account deletion/export
-- privacy/consent flows
-- security-rule emulator testing
-- appropriate UK GDPR/privacy review
+If the screen still shows an old demo interface after deployment, use a hard refresh or open the GitHub Pages site in a private/incognito window. Also check that GitHub Pages is serving the newly committed `index.html` and `js/app.js`, not an older cached deployment.
