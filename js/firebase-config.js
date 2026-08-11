@@ -1,5 +1,5 @@
 export const firebaseConfig = {
-  apiKey: "AIzaSyDHodOE0kD0kZr7w7FHPpv5uR0uv0HHfZtTU",
+  apiKey: "AIzaSyDHodOE0DkZr7w7FHPpv5uR0uv0HHfZtTU",
   authDomain: "bloom-bc6d9.firebaseapp.com",
   projectId: "bloom-bc6d9",
   storageBucket: "bloom-bc6d9.firebasestorage.app",

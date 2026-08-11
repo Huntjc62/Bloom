@@ -1,0 +1,24 @@
+Bloom Firebase configuration verified against the values supplied by the user.
+
+API key:
+AIzaSyDHodOE0DkZr7w7FHPpv5uR0uv0HHfZtTU
+
+Project ID:
+bloom-bc6d9
+
+Auth domain:
+bloom-bc6d9.firebaseapp.com
+
+Storage bucket:
+bloom-bc6d9.firebasestorage.app
+
+Messaging sender ID:
+184132855570
+
+App ID:
+1:184132855570:web:c266c8e82b880fc406f5cb
+
+Firebase Web SDK:
+12.17.1
+
+If the API-key error remains after deploying this package, the key value itself is not the part that needs changing; the next check should be the deployed GitHub Pages JavaScript/cache or Firebase/Google Cloud API configuration.
