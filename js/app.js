@@ -121,7 +121,7 @@ function mobileNav(){
 
 function shell(){
   const initials=(state.profile?.name||"B").slice(0,1).toUpperCase();
-  return `<div class="app-shell"><header class="topbar"><div class="brand"><span class="brand-mark">B</span> Bloom</div><div class="user-pill"><span>${esc(state.profile?.role==="partner"?"Partner":"Mum")}</span><span class="avatar">${initials}</span></div></header>
+  return `<div class="app-shell"><header class="topbar"><div class="brand"><img class="brand-logo" src="./assets/bloom-icon-48.png" alt="Bloom"> Bloom</div><div class="user-pill"><span>${esc(state.profile?.role==="partner"?"Partner":"Mum")}</span><span class="avatar">${initials}</span></div></header>
   <div class="layout"><aside class="sidebar">${nav()}</aside><main class="main">${content()}</main></div><nav class="mobile-nav">${mobileNav()}</nav></div>`
 }
 function content(){
