@@ -1,0 +1,9 @@
+{
+  "name": "Bloom — Pregnancy & Family Wellbeing",
+  "short_name": "Bloom",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f8f7fc",
+  "theme_color": "#7c5cfc",
+  "description": "A shared pregnancy and wellbeing companion for mums and partners."
+}
