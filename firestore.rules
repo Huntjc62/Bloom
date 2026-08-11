@@ -17,7 +17,7 @@ service cloud.firestore {
     function owner(fid) {
       return member(fid) && family(fid).data.ownerUid == request.auth.uid;
     }
-    function pendingInviteFor(fid) {
+\n    function isMum(uid) { return profile(uid).data.role == "mum"; }\n    function isPartner(uid) { return profile(uid).data.role == "partner"; }\n    function pendingInviteFor(fid) {
       return signedIn()
         && myProfile().data.pendingInviteCode != null
         && get(/databases/$(database)/documents/partnerInvites/$(myProfile().data.pendingInviteCode)).data.familyId == fid
@@ -43,6 +43,7 @@ service cloud.firestore {
       allow update: if signedIn()
         && request.resource.data.uid == resource.data.uid
         && request.resource.data.email == resource.data.email
+        && request.resource.data.role == resource.data.role
         && (
           // Normal self update: relationship stays unchanged.
           (
@@ -202,7 +203,8 @@ service cloud.firestore {
         allow update, delete: if member(fid) && resource.data.createdByUid == request.auth.uid;
       }
       match /notifications/{id} {
-        allow read, create, update, delete: if member(fid);
+        allow read: if member(fid);
+        allow create, update, delete: if member(fid) && isMum(request.auth.uid);
       }
     }
 

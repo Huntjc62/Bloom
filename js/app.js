@@ -100,32 +100,47 @@ function bindAuth(){
 }
 
 function nav(){
-  const items=[["dashboard","⌂","Today"],["checkin","❤","Check-in"]];
-  if(isBabyMode())items.push(["baby","👶","Baby tracker"]);
-  items.push(["updates","↗","Updates"],["timeline","◷",isBabyMode()?"Baby timeline":"Pregnancy timeline"],["settings","⚙","Settings"]);
+  const items=[["dashboard","⌂",isPartner()?"Partner home":"Today"]];
+  if(isMum())items.push(["checkin","❤","My check-in"]);
+  if(isMum() && isBabyMode())items.push(["baby","👶","Baby tracker"]);
+  items.push(["updates","↗",isPartner()?"Mum's updates":"Shared updates"],["timeline","◷",isBabyMode()?"Baby timeline":"Pregnancy timeline"],["settings","⚙","Settings"]);
   return items.map(x=>`<button class="nav-btn ${state.page===x[0]?"active":""}" data-page="${x[0]}"><span>${x[1]}</span>${x[2]}</button>`).join("")
 }
 function mobileNav(){
-  const items=[["dashboard","⌂","Home"],["checkin","❤","Check-in"]];
-  if(isBabyMode())items.push(["baby","👶","Baby"]);
-  items.push(["updates","↗","Updates"],["settings","⚙","Settings"]);
+  const items=[["dashboard","⌂","Home"]];
+  if(isMum())items.push(["checkin","❤","My check-in"]);
+  if(isMum() && isBabyMode())items.push(["baby","👶","Baby tracker"]);
+  items.push(["updates","↗",isPartner()?"Mum's updates":"Updates"],["settings","⚙","Settings"]);
   return items.map(x=>`<button class="${state.page===x[0]?"active":""}" data-page="${x[0]}"><span style="font-size:20px">${x[1]}</span>${x[2]}</button>`).join("")
 }
+
 function shell(){
   const initials=(state.profile?.name||"B").slice(0,1).toUpperCase();
   return `<div class="app-shell"><header class="topbar"><div class="brand"><span class="brand-mark">B</span> Bloom</div><div class="user-pill"><span>${esc(state.profile?.role==="partner"?"Partner":"Mum")}</span><span class="avatar">${initials}</span></div></header>
   <div class="layout"><aside class="sidebar">${nav()}</aside><main class="main">${content()}</main></div><nav class="mobile-nav">${mobileNav()}</nav></div>`
 }
 function content(){
-  if(state.page==="checkin")return checkin();
-  if(state.page==="baby")return babyTracker();
+  if(state.page==="checkin")return isMum()?checkin():partnerReadOnly();
+  if(state.page==="baby")return isMum()?babyTracker():partnerReadOnly();
   if(state.page==="updates")return updates();
   if(state.page==="timeline")return timeline();
   if(state.page==="settings")return settings();
   return dashboard()
 }
+function partnerReadOnly(){
+  return `<div class="page-title"><div><h1>Partner view ❤️</h1><p class="subtitle">This area is read-only for partners.</p></div></div><section class="card"><div class="notice success">Only Mum can submit wellbeing check-ins or record baby activity. You can view the latest shared information from your Partner home and Updates.</div><button class="btn btn-primary" data-page="dashboard" style="margin-top:14px">Back to Partner home</button></section>`;
+}
 function dashboard(){
+  if(isPartner()) return partnerDashboard();
   return isBabyMode()?babyDashboard():pregnancyDashboard()
+}
+function partnerDashboard(){
+  const latest=state.checkIns[0];
+  return `<div class="page-title"><div><div class="eyebrow">Bloom · Partner view</div><h1>Partner home ❤️</h1><p class="subtitle">View Mum's latest shared wellbeing information. Only Mum can submit a check-in.</p></div></div>
+  <section class="card hero"><div class="hero-inner"><div><div class="eyebrow">Mum's latest check-in</div>${latest?`<div class="big-week">${(latest.moods||[]).map(moodEmoji).join(" ")||"🙂"}</div><p class="subtitle">${esc((latest.moods||[]).join(" · ")||"No mood selected")} · ${fmt(new Date(latest.date||Date.now()))}</p>`:`<div class="big-week">💗</div><p class="subtitle">Mum hasn't shared a check-in yet.</p>`}</div><div style="font-size:80px">❤️</div></div></section>
+  <div style="height:18px"></div><div class="grid grid-2"><section class="card"><h2>Latest wellbeing</h2>${latest?checkinSummary(latest):`<div class="empty">No shared check-in yet.</div>`}</section><section class="card"><h2>Shared updates</h2>${recentUpdates(true)}</section></div>
+  ${isBabyMode()?`<div style="height:18px"></div><section class="card"><h2>👶 Recent baby activity</h2>${babyRecent()}</section>`:""}
+  <div class="notice success" style="margin-top:18px">❤️ Partner access is read-only for Mum's wellbeing and baby logging.</div>`;
 }
 function pregnancyDashboard(){
   const p=pregnancyWeeks(state.pregnancy.dueDate),pct=Math.round(p.week/40*100),last=state.checkIns[0];
@@ -162,7 +177,10 @@ function checkin(){
   <div class="action-row"><button class="btn btn-primary" id="saveCheckin">Save check-in ❤️</button><button class="btn btn-ghost" id="previewCheckin">Preview</button></div></section>
   <div class="notice warn" style="margin-top:14px">Bloom is a wellbeing tracker, not a medical diagnostic service.</div>`
 }
-function updates(){return `<div class="page-title"><div><h1>Shared updates</h1><p class="subtitle">Activity from your Bloom family.</p></div></div><section class="card"><h2>Family activity</h2>${recentUpdates(true)}</section>`}
+function updates(){
+  return `<div class="page-title"><div><h1>${isPartner()?"Mum's updates":"Shared updates"}</h1><p class="subtitle">${isPartner()?"The latest wellbeing information Mum has chosen to share with you.":"Activity from your Bloom family."}</p></div></div><section class="card"><h2>${isPartner()?"Latest shared wellbeing":"Family activity"}</h2>${recentUpdates(true)}</section>${isPartner()&&state.checkIns[0]?`<div style="height:18px"></div><section class="card"><h2>Mum's most recent check-in</h2>${checkinSummary(state.checkIns[0])}</section>`:""}`;
+}
+
 function recentUpdates(all=false){
   const items=state.notifications.slice(0,all?50:5);
   return items.length?items.map(n=>`<div class="update"><div class="update-icon">${n.icon||"🔔"}</div><div><b>${esc(n.text)}</b><div class="update-meta">${esc(n.time||"Recently")}</div></div></div>`).join(""):`<div class="empty">No shared activity yet.</div>`
@@ -198,16 +216,16 @@ function settings(){
   const connected=members.length===2 || familyConnected();
   const memberCards=members.length?members.map(m=>`<div class="family-member"><div class="member-avatar">${m.role==="mum"?"🤰":"❤️"}</div><div class="member-info"><b>${esc(m.name||"Bloom member")}</b><div class="mini">${m.role==="mum"?"Mum":"Partner"} · ${esc(m.email||"")}</div></div>${owner&&m.role==="partner"?`<button class="btn btn-danger btn-small remove-member" data-remove-member="${m.uid}">Remove</button>`:""}${!owner&&m.uid===auth.currentUser?.uid?`<button class="btn btn-danger btn-small" id="leaveFamily">Leave family</button>`:""}</div>`).join(""):`<div class="empty">No family members found.</div>`;
   return `<div class="page-title"><div><h1>Settings</h1><p class="subtitle">Account, family and app settings.</p></div></div>
-  <div class="grid grid-2"><section class="card"><h2>Account</h2><div class="notice success">✓ Signed in as ${esc(state.profile.email)}</div><p class="mini" style="margin-top:10px">${state.profile.role==="partner"?"Partner account":"Mum account"}</p></section>
+  <div class="grid grid-2"><section class="card"><h2>Account</h2><div class="notice success">✓ Signed in as ${esc(state.profile.email)}</div><p class="mini" style="margin-top:10px">${isPartner()?"Partner account · read-only wellbeing view":"Mum account · can submit check-ins and manage family"}</p></section>
   <section class="card"><h2>Family</h2>
     <div class="family-list">${memberCards}</div>
     ${connected?`<div class="notice success" style="margin-top:12px">❤️ Your Bloom family has 1 Mum and 1 Partner.</div>`:`<div class="notice warn" style="margin-top:12px">Your family has one member. You can add one Partner.</div>`}
     ${owner&&!connected?`<button class="btn btn-primary" id="createInvite" style="margin-top:12px">Add Partner</button><div id="inviteResult"></div>`:""}
     ${state.profile.role==="partner"&&!state.profile.familyId?`<div class="form-group" style="margin-top:12px"><label>Partner invitation code</label><input id="inviteCode" placeholder="e.g. AB12CD34"></div><button class="btn btn-primary" id="joinInvite">Join Bloom family</button>`:""}
   </section></div>
-  <div style="height:18px"></div><section class="card"><h2>App stage</h2><div class="notice ${isBabyMode()?"success":"warn"}">${isBabyMode()?"👶 Mum & Baby mode is active.":"🤰 Pregnancy mode is active."}</div><div class="action-row" style="margin-top:14px"><button class="btn ${!isBabyMode()?"btn-primary":"btn-secondary"}" id="pregnancyMode">🤰 Pregnancy mode</button><button class="btn ${isBabyMode()?"btn-primary":"btn-secondary"}" id="babyMode">👶 Baby mode</button></div></section>
-  ${isBabyMode()?`<div style="height:18px"></div><section class="card"><h2>Baby profile</h2><div class="grid grid-2"><div class="form-group"><label>Baby name</label><input id="babyName" value="${esc(state.baby.name)}"></div><div class="form-group"><label>Birth date</label><input id="birthDate" type="date" value="${esc(state.baby.birthDate)}"></div><div class="form-group"><label>Birth weight</label><input id="birthWeight" value="${esc(state.baby.birthWeight)}"></div></div><button class="btn btn-primary" id="saveBabyProfile">Save baby profile</button></section>`:""}
-  <div style="height:18px"></div><section class="card"><h2>Sharing</h2>${setting("mood","Mood updates","Share selected moods with your partner.")}${setting("symptoms","Symptom updates","Share selected symptoms.")}${setting("sleep","Sleep updates","Share sleep information.")}${setting("babyActivity","Baby activity","Share baby activity with your partner.")}</section>
+  <div style="height:18px"></div>${isMum()?`<section class="card"><h2>App stage</h2><div class="notice ${isBabyMode()?"success":"warn"}">${isBabyMode()?"👶 Mum & Baby mode is active.":"🤰 Pregnancy mode is active."}</div><div class="action-row" style="margin-top:14px"><button class="btn ${!isBabyMode()?"btn-primary":"btn-secondary"}" id="pregnancyMode">🤰 Pregnancy mode</button><button class="btn ${isBabyMode()?"btn-primary":"btn-secondary"}" id="babyMode">👶 Baby mode</button></div></section>`:`<section class="card"><h2>App stage</h2><div class="notice success">❤️ Mum controls the pregnancy/baby stage. You can view the latest shared information.</div></section>`}
+  ${isBabyMode()?`<div style="height:18px"></div><section class="card"><h2>Baby profile</h2>${isMum()?`<div class="grid grid-2"><div class="form-group"><label>Baby name</label><input id="babyName" value="${esc(state.baby.name)}"></div><div class="form-group"><label>Birth date</label><input id="birthDate" type="date" value="${esc(state.baby.birthDate)}"></div><div class="form-group"><label>Birth weight</label><input id="birthWeight" value="${esc(state.baby.birthWeight)}"></div></div><button class="btn btn-primary" id="saveBabyProfile">Save baby profile</button>`:`<div class="notice success">👶 Baby profile is managed by Mum. You can view baby information through shared updates.</div>`}</section>`:""}
+  ${isMum()?`<div style="height:18px"></div><section class="card"><h2>Sharing</h2>${setting("mood","Mood updates","Share selected moods with your partner.")}${setting("symptoms","Symptom updates","Share selected symptoms.")}${setting("sleep","Sleep updates","Share sleep information.")}${setting("babyActivity","Baby activity","Share baby activity with your partner.")}</section>`:`<div style="height:18px"></div><section class="card"><h2>Partner permissions</h2><div class="notice success">❤️ You can view Mum's latest shared wellbeing results and family updates. You cannot submit or edit Mum's check-ins.</div></section>`}
   <div style="height:18px"></div><section class="card"><button class="btn btn-danger" id="logout">Sign out</button></section></div>`;
 }
 function setting(key,title,desc){return `<div class="setting-row"><div><b>${title}</b><div class="mini">${desc}</div></div><label class="switch"><input class="share-toggle" data-key="${key}" type="checkbox" ${state.sharing[key]?"checked":""}><span class="slider"></span></label></div>`}
@@ -228,7 +246,12 @@ function collectCheckin(){
   }
 }
 function bindApp(){
-  document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>{state.page=b.dataset.page;saveUI();render()});
+  document.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>{
+  const target=b.dataset.page;
+  if(isPartner() && (target==="checkin" || target==="baby")) state.page="dashboard";
+  else state.page=target;
+  saveUI();render();
+});
   document.getElementById("openCheckin")?.addEventListener("click",()=>{state.page="checkin";saveUI();render()});
   document.getElementById("goSettings")?.addEventListener("click",()=>{state.page="settings";saveUI();render()});
   document.querySelectorAll(".mood-btn").forEach(b=>b.onclick=()=>b.classList.toggle("selected"));
