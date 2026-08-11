@@ -53,3 +53,18 @@ Build:
 8. Analytics
 9. Crash monitoring
 10. Security testing
+
+
+## Phase 2 — Baby tracker
+Status: included in this package.
+
+1. Baby mode transition
+2. Baby profile
+3. Feeding tracker
+4. Sleep tracker
+5. Nappy tracker
+6. Baby notes
+7. Baby timeline
+8. Shared baby activity
+9. Daily activity totals
+10. Pregnancy/mum experience retained after transition

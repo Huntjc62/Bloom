@@ -128,3 +128,57 @@ Health and pregnancy-related information is sensitive. Production implementation
 - Partner can be represented as a connected user in the prototype.
 - Sharing preferences persist.
 - UI works on mobile and desktop.
+
+
+# Phase 2 — Baby Mode
+
+## Mode transition
+- Pregnancy mode remains active before birth.
+- When the due date has passed, the next app load prompts the user to confirm whether the baby has arrived.
+- "Yes" changes the family experience to Mum & Baby mode.
+- "Not yet" keeps pregnancy mode active.
+- Users can manually change the stage in Settings at any time.
+- The transition must never delete pregnancy or mum wellbeing history.
+
+## Baby data
+baby
+- id
+- family_id
+- name
+- birth_date
+- birth_weight
+- created_at
+
+baby_activity
+- id
+- baby_id
+- family_id
+- user_id
+- type
+- subtype
+- amount
+- duration
+- note
+- occurred_at
+- created_at
+
+## Activity types
+feeding
+- bottle
+- breastfeed
+- other
+
+sleep
+- nap
+- night sleep
+
+nappy
+- wet
+- dirty
+- wet_and_dirty
+
+note
+- free text
+
+## Product principle
+The baby tracker should be extremely quick to use with one hand. A tired parent should be able to log a feed, sleep event or nappy in a few taps.

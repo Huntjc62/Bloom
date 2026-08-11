@@ -1,38 +1,42 @@
-# Bloom — Phase 1 V2 MVP
+# Bloom — Phase 2 MVP
 
-Bloom is a shared pregnancy and wellbeing companion.
+**Bloom — For you. For baby. For each other.**
 
-Tagline: **For you. For baby. For each other.**
+Phase 2 introduces the baby tracker while keeping the pregnancy and mum wellbeing experience intact.
 
-## V2 check-in upgrades
-- Multiple moods can be selected at once.
-- Physical symptoms with Mild / Moderate / Severe intensity.
-- Sleep quality and approximate sleep hours.
-- Energy level.
-- Mental and emotional wellbeing.
-- Baby movement.
-- Appetite.
-- Cravings.
-- "What do you need today?" partner-support options.
-- Optional free-text notes.
-- Share/private control.
-- Check-in preview summary.
-- Expanded structured check-in data ready for future trends and insights.
+## Baby mode
+Baby mode becomes available after the baby's arrival. When the due date has passed and the user next loads Bloom, the app asks:
 
-## Other Phase 1 features
-- Mum/partner roles
-- Pregnancy due-date and week calculation
-- Partner connection
-- Sharing preferences
-- Shared update feed
-- Notification centre
-- Pregnancy timeline
-- Responsive mobile UI
-- LocalStorage persistence
-- PWA manifest
+> Is your baby here?
+
+If yes, Bloom switches to the **Mum & Baby** experience.
+
+Users can also change the app stage manually in **Settings → App stage**, so they never lose control of the experience.
+
+## Phase 2 features
+- Baby profile
+- Feeding tracker
+  - Bottle
+  - Breastfeed
+  - Other
+  - Amount/duration
+- Sleep tracker
+  - Nap
+  - Night sleep
+  - Duration
+- Nappy tracker
+  - Wet
+  - Dirty
+  - Wet & dirty
+- Baby notes
+- Baby timeline
+- Daily baby activity totals
+- Shared baby activity notifications
+- Baby mode dashboard
+- Pregnancy ↔ Baby mode switching
 
 ## Run
 Open `index.html`, or use VS Code Live Server.
 
 ## Production note
-This is still a front-end MVP. For production, use secure authentication, a cloud database, explicit consent, proper health-data privacy controls, encrypted transport/storage, real push notifications, account deletion/export and professional security testing.
+The prototype uses LocalStorage. A production release should use secure authentication, a cloud database, real push notifications, explicit consent, privacy controls, secure deletion/export and security testing.
