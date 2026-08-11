@@ -5,21 +5,45 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#7C5CFC">
   <title>Bloom — For you. For baby. For each other.</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="css/styles.css">
-<!-- Bloom brand + installable app metadata -->
-  <link rel="icon" type="image/png" sizes="32x32" href="./assets/bloom-icon-32.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="./assets/bloom-icon-192.png">
-  <link rel="apple-touch-icon" sizes="180x180" href="./assets/bloom-icon-180.png">
   <link rel="manifest" href="./manifest.webmanifest">
-  <meta name="theme-color" content="#7c5cff">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="Bloom">
+  <link rel="stylesheet" href="css/styles.css">
 <style id="bloom-brand-overrides">
-.brand-logo{width:42px;height:42px;border-radius:12px;object-fit:cover;display:block}
-.app-brand img{width:42px;height:42px;border-radius:12px;object-fit:cover}
+/* Bloom brand — use the supplied Bloom logo throughout the interface */
+.brand{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  font-weight:800;
+  font-size:21px;
+}
+.brand-logo{
+  width:132px;
+  height:52px;
+  object-fit:contain;
+  object-position:left center;
+  display:block;
+}
+.login-logo{
+  width:min(300px, 78%);
+  height:auto;
+  max-height:180px;
+  object-fit:contain;
+  display:block;
+  margin:0 auto 22px;
+}
+.mobile-brand-logo{
+  width:120px;
+  height:44px;
+  object-fit:contain;
+}
+@media(max-width:700px){
+  .topbar{padding:0 16px}
+  .brand-logo{width:116px;height:46px}
+  .login-logo{width:min(270px,82%);max-height:160px}
+}
 </style>
+<link rel="icon" type="image/png" sizes="32x32" href="./assets/bloom-icon-32.png">
+<link rel="apple-touch-icon" sizes="180x180" href="./assets/bloom-icon-180.png">
 </head>
 <body>
   <div id="app"></div>

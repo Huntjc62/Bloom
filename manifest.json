@@ -1,9 +1,25 @@
 {
-  "name": "Bloom — Pregnancy & Family Wellbeing",
+  "name": "Bloom \u2014 For you. For baby. For each other.",
   "short_name": "Bloom",
-  "start_url": "./index.html",
+  "description": "A shared pregnancy, wellbeing and baby companion for mums and partners.",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f8f7fc",
   "theme_color": "#7c5cfc",
-  "description": "A shared pregnancy and wellbeing companion for mums and partners."
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "./assets/bloom-icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./assets/bloom-icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }

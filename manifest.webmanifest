@@ -1,12 +1,12 @@
 {
-  "name": "Bloom — For you. For baby. For each other.",
+  "name": "Bloom \u2014 For you. For baby. For each other.",
   "short_name": "Bloom",
-  "description": "Bloom brings pregnancy wellbeing, shared baby care and family updates together.",
+  "description": "A shared pregnancy, wellbeing and baby companion for mums and partners.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f8f5ff",
-  "theme_color": "#7c5cff",
+  "background_color": "#f8f7fc",
+  "theme_color": "#7c5cfc",
   "orientation": "portrait-primary",
   "icons": [
     {

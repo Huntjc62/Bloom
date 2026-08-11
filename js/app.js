@@ -53,7 +53,7 @@ function moodEmoji(m){return {Great:"😊",Good:"🙂",Okay:"😐",Exhausted:"�
 
 function loginScreen(mode="login"){
   return `<main class="login-screen"><section class="login-card">
-    <div class="logo-large">B</div><div class="eyebrow">Bloom</div>
+    <img class="login-logo" src="./assets/bloom-logo-full.png" alt="Bloom — For you. For baby. For each other.">
     <h1>${mode==="register"?"Create your Bloom account":"Welcome back to Bloom"}</h1>
     <p class="subtitle">For you. For baby. For each other.</p>
     ${mode==="register"?`<div class="form-group"><label>Your name</label><input id="authName" placeholder="e.g. Sarah"></div>
@@ -121,7 +121,7 @@ function mobileNav(){
 
 function shell(){
   const initials=(state.profile?.name||"B").slice(0,1).toUpperCase();
-  return `<div class="app-shell"><header class="topbar"><div class="brand"><img class="brand-logo" src="./assets/bloom-icon-48.png" alt="Bloom"> Bloom</div><div class="user-pill"><span>${esc(state.profile?.role==="partner"?"Partner":"Mum")}</span><span class="avatar">${initials}</span></div></header>
+  return `<div class="app-shell"><header class="topbar"><div class="brand"><span class="brand-mark">B</span> Bloom</div><div class="user-pill"><span>${esc(state.profile?.role==="partner"?"Partner":"Mum")}</span><span class="avatar">${initials}</span></div></header>
   <div class="layout"><aside class="sidebar">${nav()}</aside><main class="main">${content()}</main></div><nav class="mobile-nav">${mobileNav()}</nav></div>`
 }
 function content(){
